@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
@@ -72,7 +73,7 @@ class MainFragment : Fragment() {
             layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
         }
 
-        createRootFolder()
+//        createRootFolder()
         prepareToTakePhoto()
 
         loadPhotosFromInternalStorageIntoRecyclerView()
@@ -95,8 +96,10 @@ class MainFragment : Fragment() {
 
     private fun prepareToTakePhoto() {
         val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) {
-            val isPrivate = true
-            if(isPrivate) {
+            if (it == null) {
+                Toast.makeText(requireContext(), "Photo canceled, haven't to do save", Toast.LENGTH_LONG).show()
+            }
+            else {
                 val isSavedSuccessfully = savePhotoToInternalStorage(UUID.randomUUID().toString(), it)
                 if(isSavedSuccessfully) {
                     loadPhotosFromInternalStorageIntoRecyclerView()
@@ -124,7 +127,11 @@ class MainFragment : Fragment() {
 
     private fun savePhotoToInternalStorage(filename: String, bmp: Bitmap): Boolean {
         return try {
-            requireActivity().openFileOutput("$filename.jpg", MODE_PRIVATE).use { stream ->
+            val rootApp = requireActivity().filesDir // /data/user/0/br.com.tosin.samplefilesstorage/files
+            val newFolder = File(rootApp, ROOT_FOLDER)
+            newFolder.mkdirs() // /data/user/0/br.com.tosin.samplefilesstorage/files/MyImages
+            val fileOutputStream = FileOutputStream(File(newFolder, "$filename.jpg"))
+            fileOutputStream.use { stream ->
                 if(!bmp.compress(Bitmap.CompressFormat.JPEG, 95, stream)) {
                     throw IOException("Couldn't save bitmap.")
                 }
@@ -148,11 +155,17 @@ class MainFragment : Fragment() {
     private suspend fun loadPhotosFromInternalStorage(): List<InternalStoragePhoto> {
         return withContext(IO) {
             val files = requireActivity().filesDir.listFiles()
-            files?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
-                val bytes = it.readBytes()
-                val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                InternalStoragePhoto(it.name, bmp)
-            } ?: listOf()
+            if (files.isNotEmpty()) {
+                val myFolder = files.first().listFiles()
+                println(myFolder)
+                myFolder?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
+                    val bytes = it.readBytes()
+                    val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    InternalStoragePhoto(it.name, bmp)
+                } ?: listOf()
+            }
+            else
+                listOf()
         }
     }
 
