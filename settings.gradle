@@ -1,0 +1,2 @@
+rootProject.name = "SampleFilesStorage"
+include ':app'
