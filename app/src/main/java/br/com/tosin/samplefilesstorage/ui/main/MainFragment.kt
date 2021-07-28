@@ -1,16 +1,16 @@
 package br.com.tosin.samplefilesstorage.ui.main
 
-import android.content.Context.MODE_PRIVATE
+import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -60,11 +60,13 @@ class MainFragment : Fragment() {
 
         internalStoragePhotoAdapter = InternalStoragePhotoAdapter {
             val isDeletionSuccessful = deletePhotoFromInternalStorage(it.name)
-            if(isDeletionSuccessful) {
+            if (isDeletionSuccessful) {
                 loadPhotosFromInternalStorageIntoRecyclerView()
-                Toast.makeText(requireContext(), "Photo successfully deleted", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Photo successfully deleted", Toast.LENGTH_SHORT)
+                    .show()
             } else {
-                Toast.makeText(requireContext(), "Failed to delete photo", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Failed to delete photo", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 
@@ -73,22 +75,14 @@ class MainFragment : Fragment() {
             layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
         }
 
-//        createRootFolder()
         prepareToTakePhoto()
 
         loadPhotosFromInternalStorageIntoRecyclerView()
-    }
 
-    private fun createRootFolder() {
-        val rootApp = requireActivity().filesDir // /data/user/0/br.com.tosin.samplefilesstorage/files
-        val newFolder = File(rootApp, ROOT_FOLDER)
-        newFolder.mkdirs()
-        if (newFolder.exists())
-            Log.d(TAG, "Root folder create successfully => $newFolder")
-        else
-            Log.d(TAG, "Cannot be create root folder")
-    }
+        val stringPermissions = arrayOf(Manifest.permission.CAMERA)
 
+        ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
+    }
 
     // =============================================================================================
     //          CALL STORAGE METHODS FROM 'VIEW'
@@ -97,15 +91,23 @@ class MainFragment : Fragment() {
     private fun prepareToTakePhoto() {
         val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) {
             if (it == null) {
-                Toast.makeText(requireContext(), "Photo canceled, haven't to do save", Toast.LENGTH_LONG).show()
-            }
-            else {
-                val isSavedSuccessfully = savePhotoToInternalStorage(UUID.randomUUID().toString(), it)
-                if(isSavedSuccessfully) {
+                Toast.makeText(
+                    requireContext(),
+                    "Photo canceled, haven't to do save",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                val isSavedSuccessfully =
+                    savePhotoToInternalStorage(UUID.randomUUID().toString(), it)
+                if (isSavedSuccessfully) {
                     loadPhotosFromInternalStorageIntoRecyclerView()
-                    Toast.makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT).show()
+                    Toast
+                        .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
+                        .show()
                 } else {
-                    Toast.makeText(requireContext(), "Failed to save photo", Toast.LENGTH_SHORT).show()
+                    Toast
+                        .makeText(requireContext(), "Failed to save photo", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -127,17 +129,19 @@ class MainFragment : Fragment() {
 
     private fun savePhotoToInternalStorage(filename: String, bmp: Bitmap): Boolean {
         return try {
-            val rootApp = requireActivity().filesDir // /data/user/0/br.com.tosin.samplefilesstorage/files
+            val rootApp = requireActivity().filesDir
+            // rootApp == /data/user/0/br.com.tosin.samplefilesstorage/files
             val newFolder = File(rootApp, ROOT_FOLDER)
-            newFolder.mkdirs() // /data/user/0/br.com.tosin.samplefilesstorage/files/MyImages
+            newFolder.mkdirs()
+            // newFolder == /data/user/0/br.com.tosin.samplefilesstorage/files/MyImages
             val fileOutputStream = FileOutputStream(File(newFolder, "$filename.jpg"))
             fileOutputStream.use { stream ->
-                if(!bmp.compress(Bitmap.CompressFormat.JPEG, 95, stream)) {
+                if (!bmp.compress(Bitmap.CompressFormat.JPEG, 95, stream)) {
                     throw IOException("Couldn't save bitmap.")
                 }
             }
             true
-        } catch(e: IOException) {
+        } catch (e: IOException) {
             e.printStackTrace()
             false
         }
@@ -155,7 +159,7 @@ class MainFragment : Fragment() {
     private suspend fun loadPhotosFromInternalStorage(): List<InternalStoragePhoto> {
         return withContext(IO) {
             val files = requireActivity().filesDir.listFiles()
-            if (files.isNotEmpty()) {
+            if (files?.isNotEmpty() == true) {
                 val myFolder = files.first().listFiles()
                 println(myFolder)
                 myFolder?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
@@ -163,10 +167,8 @@ class MainFragment : Fragment() {
                     val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                     InternalStoragePhoto(it.name, bmp)
                 } ?: listOf()
-            }
-            else
+            } else
                 listOf()
         }
     }
-
 }
