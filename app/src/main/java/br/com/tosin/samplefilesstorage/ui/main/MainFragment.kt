@@ -20,11 +20,11 @@ import br.com.tosin.samplefilesstorage.util.ManagerFilesWithActivityReference
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainFragment : Fragment() {
 
     companion object {
-        private const val ROOT_FOLDER = "MyImages"
         private const val TAG = "Debug_tag"
         fun newInstance() = MainFragment()
     }
@@ -55,15 +55,30 @@ class MainFragment : Fragment() {
 
     private fun configView() {
         internalStoragePhotoAdapter = InternalStoragePhotoAdapter {
-            val isDeletionSuccessful = deletePhotoFromInternalStorage(it.name)
-            if (isDeletionSuccessful) {
-                loadPhotosFromInternalStorageIntoRecyclerView()
-                Toast.makeText(requireContext(), "Photo successfully deleted", Toast.LENGTH_SHORT)
-                    .show()
-            } else {
-                Toast.makeText(requireContext(), "Failed to delete photo", Toast.LENGTH_SHORT)
-                    .show()
+
+            val delegate = object : StorageFileDelegate {
+                override fun onSuccess() {
+                    loadPhotosFromInternalStorageIntoRecyclerView()
+                    Toast.makeText(
+                        requireContext(),
+                        "Photo successfully deleted",
+                        Toast.LENGTH_SHORT
+                    )
+                        .show()
+                }
+
+                override fun onError(msgError: String, exception: java.lang.Exception?) {
+                    Toast.makeText(requireContext(), msgError, Toast.LENGTH_SHORT)
+                        .show()
+                }
+
             }
+            ManagerFilesWithActivityReference
+                .deleteFileFromInternalStorage(
+                    this,
+                    "/FolderOne/${it.name}",
+                    delegate
+                )
         }
 
         _binding?.recyclerViewFilesInApp?.apply {
@@ -71,20 +86,6 @@ class MainFragment : Fragment() {
             layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
         }
 
-        prepareToTakePhoto()
-
-        loadPhotosFromInternalStorageIntoRecyclerView()
-
-        val stringPermissions = arrayOf(Manifest.permission.CAMERA)
-
-        ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
-    }
-
-    // =============================================================================================
-    //          CALL STORAGE METHODS FROM 'VIEW'
-    // =============================================================================================
-
-    private fun prepareToTakePhoto() {
         val delegate = object : StorageFileDelegate {
             override fun onSuccess() {
                 loadPhotosFromInternalStorageIntoRecyclerView()
@@ -100,7 +101,6 @@ class MainFragment : Fragment() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-
         }
         val takePhoto =  ManagerFilesWithActivityReference
             .createCallTakePhoto(this, delegate)
@@ -108,7 +108,18 @@ class MainFragment : Fragment() {
         _binding?.buttonTakePhoto?.setOnClickListener {
            takePhoto.launch(null)
         }
+
+        loadPhotosFromInternalStorageIntoRecyclerView()
+
+        val stringPermissions = arrayOf(Manifest.permission.CAMERA)
+
+        ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
     }
+
+    // =============================================================================================
+    //          CALL STORAGE METHODS FROM 'VIEW'
+    // =============================================================================================
+
 
     private fun loadPhotosFromInternalStorageIntoRecyclerView() {
         lifecycleScope.launch {
@@ -121,15 +132,6 @@ class MainFragment : Fragment() {
     //          ACCESS STORAGE METHODS
     // =============================================================================================
 
-
-    private fun deletePhotoFromInternalStorage(filename: String): Boolean {
-        return try {
-            requireActivity().deleteFile(filename)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
 
     private suspend fun loadPhotosFromInternalStorage(): List<InternalStoragePhoto> {
         return withContext(IO) {

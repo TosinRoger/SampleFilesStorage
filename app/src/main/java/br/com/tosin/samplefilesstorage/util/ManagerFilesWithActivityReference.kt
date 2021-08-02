@@ -9,6 +9,7 @@ import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.lang.Exception
 import java.util.*
 
 object ManagerFilesWithActivityReference {
@@ -17,11 +18,13 @@ object ManagerFilesWithActivityReference {
     private const val FOLDER_TWO = "FolderTwo"
     private const val FOLDER_THREE = "FolderThree"
 
+    /**
+     * Call .launch(null) to start camera
+     */
     fun createCallTakePhoto(
         fragment: Fragment,
         delegate: StorageFileDelegate
     ): ActivityResultLauncher<Void> {
-
         return fragment.registerForActivityResult(ActivityResultContracts.TakePicturePreview()) {
             if (it == null) {
                 delegate.onError("Bitmap is null. Can't provider image from camera", null)
@@ -39,6 +42,28 @@ object ManagerFilesWithActivityReference {
                     delegate.onError("Fail to sava photo", null)
             }
         }
+    }
+
+    fun deleteFileFromInternalStorage(
+        fragment: Fragment,
+        fileName: String,
+        delegate: StorageFileDelegate
+    ): Boolean {
+        try {
+            val rootApp = fragment.requireActivity().filesDir
+            val folderOne = File(rootApp, fileName)
+
+            val isDeleted = folderOne.delete()
+
+            if (isDeleted)
+                delegate.onSuccess()
+            else
+                delegate.onError("Problem to fetch file", null)
+        } catch (e: Exception) {
+            delegate.onError(e.localizedMessage, e)
+        }
+
+        return true
     }
 
     // =============================================================================================
