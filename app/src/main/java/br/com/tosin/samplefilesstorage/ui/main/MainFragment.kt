@@ -1,31 +1,25 @@
 package br.com.tosin.samplefilesstorage.ui.main
 
 import android.Manifest
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import br.com.tosin.samplefilesstorage.databinding.MainFragmentBinding
+import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
 import br.com.tosin.samplefilesstorage.model.InternalStoragePhoto
 import br.com.tosin.samplefilesstorage.ui.main.adapter.InternalStoragePhotoAdapter
+import br.com.tosin.samplefilesstorage.util.ManagerFilesWithActivityReference
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.util.*
 
 class MainFragment : Fragment() {
 
@@ -39,7 +33,6 @@ class MainFragment : Fragment() {
     private val binding: MainFragmentBinding get() = _binding!!
 
     private lateinit var internalStoragePhotoAdapter: InternalStoragePhotoAdapter
-    private lateinit var viewModel: MainViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -56,8 +49,11 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
+        configView()
+    }
+
+    private fun configView() {
         internalStoragePhotoAdapter = InternalStoragePhotoAdapter {
             val isDeletionSuccessful = deletePhotoFromInternalStorage(it.name)
             if (isDeletionSuccessful) {
@@ -89,30 +85,28 @@ class MainFragment : Fragment() {
     // =============================================================================================
 
     private fun prepareToTakePhoto() {
-        val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) {
-            if (it == null) {
+        val delegate = object : StorageFileDelegate {
+            override fun onSuccess() {
+                loadPhotosFromInternalStorageIntoRecyclerView()
+                Toast
+                    .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+            override fun onError(msgError: String, exception: java.lang.Exception?) {
                 Toast.makeText(
                     requireContext(),
-                    "Photo canceled, haven't to do save",
+                    msgError,
                     Toast.LENGTH_LONG
                 ).show()
-            } else {
-                val isSavedSuccessfully =
-                    savePhotoToInternalStorage(UUID.randomUUID().toString(), it)
-                if (isSavedSuccessfully) {
-                    loadPhotosFromInternalStorageIntoRecyclerView()
-                    Toast
-                        .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
-                        .show()
-                } else {
-                    Toast
-                        .makeText(requireContext(), "Failed to save photo", Toast.LENGTH_SHORT)
-                        .show()
-                }
             }
+
         }
+        val takePhoto =  ManagerFilesWithActivityReference
+            .createCallTakePhoto(this, delegate)
+
         _binding?.buttonTakePhoto?.setOnClickListener {
-            takePhoto.launch()
+           takePhoto.launch(null)
         }
     }
 
@@ -127,25 +121,6 @@ class MainFragment : Fragment() {
     //          ACCESS STORAGE METHODS
     // =============================================================================================
 
-    private fun savePhotoToInternalStorage(filename: String, bmp: Bitmap): Boolean {
-        return try {
-            val rootApp = requireActivity().filesDir
-            // rootApp == /data/user/0/br.com.tosin.samplefilesstorage/files
-            val newFolder = File(rootApp, ROOT_FOLDER)
-            newFolder.mkdirs()
-            // newFolder == /data/user/0/br.com.tosin.samplefilesstorage/files/MyImages
-            val fileOutputStream = FileOutputStream(File(newFolder, "$filename.jpg"))
-            fileOutputStream.use { stream ->
-                if (!bmp.compress(Bitmap.CompressFormat.JPEG, 95, stream)) {
-                    throw IOException("Couldn't save bitmap.")
-                }
-            }
-            true
-        } catch (e: IOException) {
-            e.printStackTrace()
-            false
-        }
-    }
 
     private fun deletePhotoFromInternalStorage(filename: String): Boolean {
         return try {
