@@ -45,6 +45,10 @@ class InternalStoragePhotoAdapter(
     override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
         val photo = currentList[position]
         holder.binding.apply {
+
+            textViewFolderName.text = photo.folderName
+            textViewFileName.text = photo.name
+
             imageViewItemPhoto.setImageBitmap(photo.bmp)
 
             val aspectRatio = photo.bmp.width.toFloat() / photo.bmp.height.toFloat()

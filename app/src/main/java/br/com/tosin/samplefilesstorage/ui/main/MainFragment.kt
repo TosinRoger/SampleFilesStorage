@@ -4,7 +4,6 @@ import android.Manifest
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -84,8 +83,7 @@ class MainFragment : Fragment() {
             }
             ManagerFilesWithActivityReference
                 .deleteFileFromInternalStorage(
-                    this,
-                    "/FolderOne/${it.name}",
+                    it.urlString,
                     delegate
                 )
         }
@@ -97,6 +95,7 @@ class MainFragment : Fragment() {
 
         val delegate = object : StorageFileDelegate {
             override fun onSuccess() {
+                cameraUriTemp = null
                 loadPhotosFromInternalStorageIntoRecyclerView()
                 Toast
                     .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
@@ -104,6 +103,7 @@ class MainFragment : Fragment() {
             }
 
             override fun onError(msgError: String, exception: java.lang.Exception?) {
+                cameraUriTemp = null
                 Toast.makeText(
                     requireContext(),
                     msgError,
@@ -120,9 +120,9 @@ class MainFragment : Fragment() {
                         requireContext(),
                         cameraUriTemp!!,
                         StorageFolder.FROM_CAMERA,
-                        "camera_${ProviderFileName.createImageName()}"
+                        "camera_${ProviderFileName.createImageName()}",
+                        delegate
                     )
-                cameraUriTemp = null
             }
             else {
                 showMsgError("problemas ao tirar a foto")
@@ -142,7 +142,8 @@ class MainFragment : Fragment() {
                         requireContext(),
                         result,
                         StorageFolder.FROM_GALLERY,
-                        "gallery_${ProviderFileName.createImageName()}"
+                        "gallery_${ProviderFileName.createImageName()}",
+                        delegate
                     )
             }
         }
@@ -199,13 +200,18 @@ class MainFragment : Fragment() {
         return withContext(IO) {
             val files = requireActivity().filesDir.listFiles()
             if (files?.isNotEmpty() == true) {
-                val myFolder = files.first().listFiles()
-                println(myFolder)
-                myFolder?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
-                    val bytes = it.readBytes()
-                    val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    InternalStoragePhoto(it.name, bmp)
-                } ?: listOf()
+                val auxList = mutableListOf<InternalStoragePhoto>()
+                files.forEach { folder ->
+                    val temp = folder.listFiles()
+                    println(temp)
+                    val aux = temp?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
+                        val bytes = it.readBytes()
+                        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        InternalStoragePhoto(folder.name, it.name, bmp, it.path)
+                    } ?: listOf()
+                    auxList.addAll(aux)
+                }
+                auxList
             } else
                 listOf()
         }
