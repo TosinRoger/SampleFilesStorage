@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Sample Files Storage</string>
     <string name="button_take_photo">Take a photo</string>
+    <string name="open_gallery">Open gallery</string>
 </resources>

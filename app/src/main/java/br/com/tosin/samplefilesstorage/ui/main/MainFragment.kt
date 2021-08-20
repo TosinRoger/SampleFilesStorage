@@ -9,6 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -20,6 +22,8 @@ import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
 import br.com.tosin.samplefilesstorage.model.InternalStoragePhoto
 import br.com.tosin.samplefilesstorage.ui.main.adapter.InternalStoragePhotoAdapter
 import br.com.tosin.samplefilesstorage.util.ManagerFilesWithActivityReference
+import br.com.tosin.samplefilesstorage.util.ProviderFileName
+import br.com.tosin.samplefilesstorage.util.StorageFolder
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,6 +39,10 @@ class MainFragment : Fragment() {
     private val binding: MainFragmentBinding get() = _binding!!
 
     private lateinit var internalStoragePhotoAdapter: InternalStoragePhotoAdapter
+
+    private lateinit var takePhoto: ActivityResultLauncher<Uri>
+    private lateinit var openGallery: ActivityResultLauncher<String>
+    private var cameraUriTemp: Uri? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,7 +65,6 @@ class MainFragment : Fragment() {
 
     private fun configView() {
         internalStoragePhotoAdapter = InternalStoragePhotoAdapter {
-
             val delegate = object : StorageFileDelegate {
                 override fun onSuccess() {
                     loadPhotosFromInternalStorageIntoRecyclerView()
@@ -104,22 +111,56 @@ class MainFragment : Fragment() {
                 ).show()
             }
         }
-        val takePhotoPreview =  ManagerFilesWithActivityReference
-            .createCallTakePhoto(
-                this,
-                ActivityResultContracts.TakePicturePreview(),
-                delegate
-            )
 
-        val folder = activity?.filesDir
-        val uri = Uri.fromFile(folder)
-        val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture()) { result ->
-            Log.d("", "")
+        val delegateTakePhoto = ActivityResultCallback<Boolean> { result ->
+            if (result) {
+                // result === /data/user/0/br.com.tosin.samplefilesstorage/cache/TEMP_IMAGE/2021-08-20_-_14:16:17.jpg
+                ManagerFilesWithActivityReference
+                    .openContentImageAndMoveToApp(
+                        requireContext(),
+                        cameraUriTemp!!,
+                        StorageFolder.FROM_CAMERA,
+                        "camera_${ProviderFileName.createImageName()}"
+                    )
+                cameraUriTemp = null
+            }
+            else {
+                showMsgError("problemas ao tirar a foto")
+            }
         }
 
+        takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture(), delegateTakePhoto)
+
+        val delegateOpenGallery = ActivityResultCallback<Uri> { result ->
+            if (result == null) {
+                showMsgError("problemas ao buscar imagen da galeria")
+            }
+            else {
+                // result === content://com.android.providers.media.documents/document/image%3A33
+                ManagerFilesWithActivityReference
+                    .openContentImageAndMoveToApp(
+                        requireContext(),
+                        result,
+                        StorageFolder.FROM_GALLERY,
+                        "gallery_${ProviderFileName.createImageName()}"
+                    )
+            }
+        }
+
+        openGallery = registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
+
         _binding?.buttonTakePhoto?.setOnClickListener {
-//           takePhotoPreview.launch(null)
-            takePhoto.launch(uri)
+            val fileName = ProviderFileName.createImageName()
+            cameraUriTemp = ManagerFilesWithActivityReference.provideUriFileWithAuthority(
+                requireContext(),
+                StorageFolder.TEMP_IMAGE,
+                fileName
+            )
+            takePhoto.launch(cameraUriTemp)
+        }
+
+        _binding?.buttonOpenGallery?.setOnClickListener {
+            openGallery.launch("image/*")
         }
 
         loadPhotosFromInternalStorageIntoRecyclerView()
@@ -127,6 +168,14 @@ class MainFragment : Fragment() {
         val stringPermissions = arrayOf(Manifest.permission.CAMERA)
 
         ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
+    }
+
+    private fun showMsgError(msg: String) {
+        Toast.makeText(
+            requireContext(),
+            msg,
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     // =============================================================================================

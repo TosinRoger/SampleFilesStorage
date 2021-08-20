@@ -1,8 +1,12 @@
 package br.com.tosin.samplefilesstorage.util
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
@@ -15,8 +19,59 @@ import java.util.*
 object ManagerFilesWithActivityReference {
 
     private const val FOLDER_ONE = "FolderOne"
-    private const val FOLDER_TWO = "FolderTwo"
-    private const val FOLDER_THREE = "FolderThree"
+
+    fun provideUriFileWithAuthority(
+        context: Context,
+        folderName: StorageFolder,
+        fileName: String
+    ): Uri {
+        val folder = createCacheFolder(context, folderName)
+
+        val newFile = File(folder, fileName)
+
+        return FileProvider.getUriForFile(
+            context,
+            context.packageName,
+            newFile
+        )
+    }
+
+    fun openContentImageAndMoveToApp(
+        context: Context,
+        pathOrigin: Uri,
+        folderNameToSave: StorageFolder,
+        fileNameToSave: String
+    ) {
+        // From camera
+        // fileNameToSave === content://br.com.tosin.samplefilesstorage/TakePictureFromCamera/2021-08-20_-_14%3A33%3A31.jpg
+        // From gallery
+        // fileNameToSave === content://com.android.providers.media.documents/document/image%3A33
+        Log.d("", "")
+    }
+
+    private fun createFileFolder(context: Context, folderName: StorageFolder): File {
+        val rootApp = context.filesDir
+        // rootApp == /data/user/0/APP_PACKAGE_NAME/files
+        val newFolder = File(rootApp, folderName.folderName)
+        // newFolder == /data/user/0/APP_PACKAGE_NAME/files/FOLDER_NAME
+        newFolder.mkdirs()
+
+        return newFolder
+    }
+
+    private fun createCacheFolder(context: Context, folderName: StorageFolder): File {
+        val rootApp = context.cacheDir
+        // rootApp == /data/user/0/APP_PACKAGE_NAME/cache
+        val newFolder = File(rootApp, folderName.folderName)
+        // newFolder == /data/user/0/APP_PACKAGE_NAME/cache/FOLDER_NAME
+        newFolder.mkdirs()
+
+        return newFolder
+    }
+
+    // =============================================================================================
+    //  OLD METHODS
+    // =============================================================================================
 
     /**
      * Call .launch(null) to start camera
