@@ -2,11 +2,14 @@ package br.com.tosin.samplefilesstorage.ui.main
 
 import android.Manifest
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -20,7 +23,6 @@ import br.com.tosin.samplefilesstorage.util.ManagerFilesWithActivityReference
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class MainFragment : Fragment() {
 
@@ -102,11 +104,22 @@ class MainFragment : Fragment() {
                 ).show()
             }
         }
-        val takePhoto =  ManagerFilesWithActivityReference
-            .createCallTakePhoto(this, delegate)
+        val takePhotoPreview =  ManagerFilesWithActivityReference
+            .createCallTakePhoto(
+                this,
+                ActivityResultContracts.TakePicturePreview(),
+                delegate
+            )
+
+        val folder = activity?.filesDir
+        val uri = Uri.fromFile(folder)
+        val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture()) { result ->
+            Log.d("", "")
+        }
 
         _binding?.buttonTakePhoto?.setOnClickListener {
-           takePhoto.launch(null)
+//           takePhotoPreview.launch(null)
+            takePhoto.launch(uri)
         }
 
         loadPhotosFromInternalStorageIntoRecyclerView()

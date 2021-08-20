@@ -23,9 +23,10 @@ object ManagerFilesWithActivityReference {
      */
     fun createCallTakePhoto(
         fragment: Fragment,
+        fromWhere:  ActivityResultContracts.TakePicturePreview,
         delegate: StorageFileDelegate
     ): ActivityResultLauncher<Void> {
-        return fragment.registerForActivityResult(ActivityResultContracts.TakePicturePreview()) {
+        return fragment.registerForActivityResult(fromWhere) {
             if (it == null) {
                 delegate.onError("Bitmap is null. Can't provider image from camera", null)
             } else {
