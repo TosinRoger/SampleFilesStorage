@@ -34,7 +34,7 @@ object ManagerFilesWithActivityReference {
         delegate: StorageFileDelegate
     ) {
         // From camera
-        // fileNameToSave === content://br.com.tosin.samplefilesstorage/TakePictureFromCamera/2021-08-20_-_14%3A33%3A31.jpg
+        // fileNameToSave === content://br.com.tosin.filesstorageexample/TakePictureFromCamera/2021-08-20_-_14%3A33%3A31.jpg
         // From gallery
         // fileNameToSave === content://com.android.providers.media.documents/document/image%3A33
         Log.d("", "")

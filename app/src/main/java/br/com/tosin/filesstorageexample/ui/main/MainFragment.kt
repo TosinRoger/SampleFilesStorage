@@ -31,7 +31,7 @@ import kotlinx.coroutines.withContext
 class MainFragment : Fragment() {
 
     companion object {
-        private const val restore_camera_uri = "restore_camera_uri"
+        private const val RESTORE_CAMERA_URI_KEY = "restore_camera_uri_key"
         fun newInstance() = MainFragment()
     }
 
@@ -41,7 +41,7 @@ class MainFragment : Fragment() {
     private lateinit var internalStoragePhotoAdapter: InternalStoragePhotoAdapter
 
     private lateinit var takePhoto: ActivityResultLauncher<Uri>
-    private lateinit var openGallery: ActivityResultLauncher<String>
+    private lateinit var fetchGalleryPhoto: ActivityResultLauncher<String>
     private var cameraUriTemp: Uri? = null
 
     override fun onCreateView(
@@ -61,7 +61,7 @@ class MainFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         savedInstanceState?.let {
-            it.getString(restore_camera_uri)?.let { stringUri ->
+            it.getString(RESTORE_CAMERA_URI_KEY)?.let { stringUri ->
                 cameraUriTemp = Uri.parse(stringUri)
             }
         }
@@ -72,7 +72,7 @@ class MainFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(restore_camera_uri, cameraUriTemp.toString())
+        outState.putString(RESTORE_CAMERA_URI_KEY, cameraUriTemp.toString())
     }
 
     private fun configView() {
@@ -106,9 +106,8 @@ class MainFragment : Fragment() {
             layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
         }
 
-        val delegateCameraResult = object : StorageFileDelegate {
+        val delegateCameraOrGalleryResult = object : StorageFileDelegate {
             override fun onSuccess() {
-//                cameraUriTemp = null
                 loadPhotosFromInternalStorageIntoRecyclerView()
                 Toast
                     .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
@@ -116,7 +115,6 @@ class MainFragment : Fragment() {
             }
 
             override fun onError(msgError: String, exception: java.lang.Exception?) {
-//                cameraUriTemp = null
                 Toast.makeText(
                     requireContext(),
                     msgError,
@@ -127,14 +125,14 @@ class MainFragment : Fragment() {
 
         val delegateTakePhoto = ActivityResultCallback<Boolean> { result ->
             if (result) {
-                // result === /data/user/0/br.com.tosin.samplefilesstorage/cache/TEMP_IMAGE/2021-08-20_-_14:16:17.jpg
+                // result === /data/user/0/br.com.tosin.filesstorageexample/cache/TEMP_IMAGE/2021-08-20_-_14:16:17.jpg
                 ManagerFilesWithActivityReference
                     .openContentImageAndMoveToApp(
                         requireContext(),
                         cameraUriTemp!!,
                         StorageFolder.FROM_CAMERA,
                         "camera_${ProviderFileName.createImageNameToJPG()}",
-                        delegateCameraResult
+                        delegateCameraOrGalleryResult
                     )
             } else {
                 showMsgError(getString(R.string.error_problems_take_picture))
@@ -155,12 +153,12 @@ class MainFragment : Fragment() {
                         result,
                         StorageFolder.FROM_GALLERY,
                         "gallery_${ProviderFileName.createImageNameToJPG()}",
-                        delegateCameraResult
+                        delegateCameraOrGalleryResult
                     )
             }
         }
 
-        openGallery =
+        fetchGalleryPhoto =
             registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
 
         _binding?.buttonTakePhoto?.setOnClickListener {
@@ -174,7 +172,7 @@ class MainFragment : Fragment() {
         }
 
         _binding?.buttonOpenGallery?.setOnClickListener {
-            openGallery.launch("image/*")
+            fetchGalleryPhoto.launch("image/*")
         }
 
         loadPhotosFromInternalStorageIntoRecyclerView()
