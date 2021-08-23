@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import br.com.tosin.samplefilesstorage.R
 import br.com.tosin.samplefilesstorage.databinding.MainFragmentBinding
 import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
 import br.com.tosin.samplefilesstorage.model.InternalStoragePhoto
@@ -30,7 +31,6 @@ import kotlinx.coroutines.withContext
 class MainFragment : Fragment() {
 
     companion object {
-        private const val TAG = "Debug_tag"
         fun newInstance() = MainFragment()
     }
 
@@ -82,7 +82,7 @@ class MainFragment : Fragment() {
 
             }
             ManagerFilesWithActivityReference
-                .deleteFileFromInternalStorage(
+                .deleteFileFromInternalPath(
                     it.urlString,
                     delegate
                 )
@@ -93,7 +93,7 @@ class MainFragment : Fragment() {
             layoutManager = StaggeredGridLayoutManager(3, RecyclerView.VERTICAL)
         }
 
-        val delegate = object : StorageFileDelegate {
+        val delegateCameraResult = object : StorageFileDelegate {
             override fun onSuccess() {
                 cameraUriTemp = null
                 loadPhotosFromInternalStorageIntoRecyclerView()
@@ -120,12 +120,12 @@ class MainFragment : Fragment() {
                         requireContext(),
                         cameraUriTemp!!,
                         StorageFolder.FROM_CAMERA,
-                        "camera_${ProviderFileName.createImageName()}",
-                        delegate
+                        "camera_${ProviderFileName.createImageNameToJPG()}",
+                        delegateCameraResult
                     )
             }
             else {
-                showMsgError("problemas ao tirar a foto")
+                showMsgError(getString(R.string.error_problems_take_picture))
             }
         }
 
@@ -133,7 +133,7 @@ class MainFragment : Fragment() {
 
         val delegateOpenGallery = ActivityResultCallback<Uri> { result ->
             if (result == null) {
-                showMsgError("problemas ao buscar imagen da galeria")
+                showMsgError(getString(R.string.error_problems_open_gallery))
             }
             else {
                 // result === content://com.android.providers.media.documents/document/image%3A33
@@ -142,8 +142,8 @@ class MainFragment : Fragment() {
                         requireContext(),
                         result,
                         StorageFolder.FROM_GALLERY,
-                        "gallery_${ProviderFileName.createImageName()}",
-                        delegate
+                        "gallery_${ProviderFileName.createImageNameToJPG()}",
+                        delegateCameraResult
                     )
             }
         }
@@ -151,7 +151,7 @@ class MainFragment : Fragment() {
         openGallery = registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
 
         _binding?.buttonTakePhoto?.setOnClickListener {
-            val fileName = ProviderFileName.createImageName()
+            val fileName = ProviderFileName.createImageNameToJPG()
             cameraUriTemp = ManagerFilesWithActivityReference.provideUriFileWithAuthority(
                 requireContext(),
                 StorageFolder.TEMP_IMAGE,
@@ -180,9 +180,8 @@ class MainFragment : Fragment() {
     }
 
     // =============================================================================================
-    //          CALL STORAGE METHODS FROM 'VIEW'
+    //          CALL STORAGE METHODS FROM 'VIEW' - Add in ViewModel, presenter or controller
     // =============================================================================================
-
 
     private fun loadPhotosFromInternalStorageIntoRecyclerView() {
         lifecycleScope.launch {
@@ -192,9 +191,8 @@ class MainFragment : Fragment() {
     }
 
     // =============================================================================================
-    //          ACCESS STORAGE METHODS
+    //          ACCESS STORAGE METHODS - Add in Model or class responsible to manipulate things
     // =============================================================================================
-
 
     private suspend fun loadPhotosFromInternalStorage(): List<InternalStoragePhoto> {
         return withContext(IO) {

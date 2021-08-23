@@ -6,6 +6,11 @@ import java.util.*
 
 object ProviderFileName {
 
+    fun createImageNameToJPG(): String {
+        val aux = createImageName()
+        return "$aux.jpg"
+    }
+
     fun createImageName(): String {
         val calendar = Calendar.getInstance()
         val dateFormat: DateFormat = SimpleDateFormat("yyyy-MM-dd_-_HH:mm:ss", Locale.getDefault())

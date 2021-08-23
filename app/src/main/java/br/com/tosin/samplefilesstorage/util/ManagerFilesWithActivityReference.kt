@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.net.toFile
 import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +18,6 @@ object ManagerFilesWithActivityReference {
         fileName: String
     ): Uri {
         val folder = createCacheFolder(context, folderName)
-
         val newFile = File(folder, fileName)
 
         return FileProvider.getUriForFile(
@@ -59,8 +59,10 @@ object ManagerFilesWithActivityReference {
                     output.flush()
                 }
             }
+            deleteTempImage(context)
             delegate.onSuccess()
         } catch (e: IOException) {
+            deleteTempImage(context)
             delegate.onError(e.localizedMessage, null)
         }
     }
@@ -86,17 +88,20 @@ object ManagerFilesWithActivityReference {
         return newFolder
     }
 
-    // =============================================================================================
-    //  OLD METHODS
-    // =============================================================================================
+    private fun deleteTempImage(context: Context): Boolean {
+        val cache = createCacheFolder(context, StorageFolder.TEMP_IMAGE)
+        return if(cache.exists())
+            cache.deleteRecursively()
+        else
+            false
+    }
 
-    fun deleteFileFromInternalStorage(
+    fun deleteFileFromInternalPath(
         pathFile: String,
         delegate: StorageFileDelegate
     ): Boolean {
         try {
             val folderOne = File(pathFile)
-
             val isDeleted = folderOne.delete()
 
             if (isDeleted)
