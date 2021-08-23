@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--    https://developer.android.com/reference/androidx/core/content/FileProvider  -->
+    <cache-path
+        name="TakePictureFromCamera"
+        path="TempImage/" />
+</paths>
