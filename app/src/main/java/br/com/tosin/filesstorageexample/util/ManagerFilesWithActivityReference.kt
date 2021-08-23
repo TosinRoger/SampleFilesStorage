@@ -1,11 +1,10 @@
-package br.com.tosin.samplefilesstorage.util
+package br.com.tosin.filesstorageexample.util
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
-import androidx.core.net.toFile
-import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
+import br.com.tosin.filesstorageexample.delegate.StorageFileDelegate
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

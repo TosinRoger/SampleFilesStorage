@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.ui.main
+package br.com.tosin.filesstorageexample.ui.main
 
 import android.Manifest
 import android.graphics.BitmapFactory
@@ -16,14 +16,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import br.com.tosin.samplefilesstorage.R
-import br.com.tosin.samplefilesstorage.databinding.MainFragmentBinding
-import br.com.tosin.samplefilesstorage.delegate.StorageFileDelegate
-import br.com.tosin.samplefilesstorage.model.InternalStoragePhoto
-import br.com.tosin.samplefilesstorage.ui.main.adapter.InternalStoragePhotoAdapter
-import br.com.tosin.samplefilesstorage.util.ManagerFilesWithActivityReference
-import br.com.tosin.samplefilesstorage.util.ProviderFileName
-import br.com.tosin.samplefilesstorage.util.StorageFolder
+import br.com.tosin.filesstorageexample.R
+import br.com.tosin.filesstorageexample.databinding.MainFragmentBinding
+import br.com.tosin.filesstorageexample.delegate.StorageFileDelegate
+import br.com.tosin.filesstorageexample.model.InternalStoragePhoto
+import br.com.tosin.filesstorageexample.ui.main.adapter.InternalStoragePhotoAdapter
+import br.com.tosin.filesstorageexample.util.ManagerFilesWithActivityReference
+import br.com.tosin.filesstorageexample.util.ProviderFileName
+import br.com.tosin.filesstorageexample.util.StorageFolder
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 class MainFragment : Fragment() {
 
     companion object {
+        private const val restore_camera_uri = "restore_camera_uri"
         fun newInstance() = MainFragment()
     }
 
@@ -59,7 +60,19 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        savedInstanceState?.let {
+            it.getString(restore_camera_uri)?.let { stringUri ->
+                cameraUriTemp = Uri.parse(stringUri)
+            }
+        }
+
         configView()
+        requestPermissionCamera()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(restore_camera_uri, cameraUriTemp.toString())
     }
 
     private fun configView() {
@@ -95,7 +108,7 @@ class MainFragment : Fragment() {
 
         val delegateCameraResult = object : StorageFileDelegate {
             override fun onSuccess() {
-                cameraUriTemp = null
+//                cameraUriTemp = null
                 loadPhotosFromInternalStorageIntoRecyclerView()
                 Toast
                     .makeText(requireContext(), "Photo saved successfully", Toast.LENGTH_SHORT)
@@ -103,7 +116,7 @@ class MainFragment : Fragment() {
             }
 
             override fun onError(msgError: String, exception: java.lang.Exception?) {
-                cameraUriTemp = null
+//                cameraUriTemp = null
                 Toast.makeText(
                     requireContext(),
                     msgError,
@@ -123,19 +136,18 @@ class MainFragment : Fragment() {
                         "camera_${ProviderFileName.createImageNameToJPG()}",
                         delegateCameraResult
                     )
-            }
-            else {
+            } else {
                 showMsgError(getString(R.string.error_problems_take_picture))
             }
         }
 
-        takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture(), delegateTakePhoto)
+        takePhoto =
+            registerForActivityResult(ActivityResultContracts.TakePicture(), delegateTakePhoto)
 
         val delegateOpenGallery = ActivityResultCallback<Uri> { result ->
             if (result == null) {
                 showMsgError(getString(R.string.error_problems_open_gallery))
-            }
-            else {
+            } else {
                 // result === content://com.android.providers.media.documents/document/image%3A33
                 ManagerFilesWithActivityReference
                     .openContentImageAndMoveToApp(
@@ -148,7 +160,8 @@ class MainFragment : Fragment() {
             }
         }
 
-        openGallery = registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
+        openGallery =
+            registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
 
         _binding?.buttonTakePhoto?.setOnClickListener {
             val fileName = ProviderFileName.createImageNameToJPG()
@@ -165,10 +178,6 @@ class MainFragment : Fragment() {
         }
 
         loadPhotosFromInternalStorageIntoRecyclerView()
-
-        val stringPermissions = arrayOf(Manifest.permission.CAMERA)
-
-        ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
     }
 
     private fun showMsgError(msg: String) {
@@ -177,6 +186,11 @@ class MainFragment : Fragment() {
             msg,
             Toast.LENGTH_LONG
         ).show()
+    }
+
+    private fun requestPermissionCamera() {
+        val stringPermissions = arrayOf(Manifest.permission.CAMERA)
+        ActivityCompat.requestPermissions(requireActivity(), stringPermissions, 169)
     }
 
     // =============================================================================================
@@ -202,11 +216,12 @@ class MainFragment : Fragment() {
                 files.forEach { folder ->
                     val temp = folder.listFiles()
                     println(temp)
-                    val aux = temp?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }?.map {
-                        val bytes = it.readBytes()
-                        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                        InternalStoragePhoto(folder.name, it.name, bmp, it.path)
-                    } ?: listOf()
+                    val aux = temp?.filter { it.canRead() && it.isFile && it.name.endsWith(".jpg") }
+                        ?.map {
+                            val bytes = it.readBytes()
+                            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            InternalStoragePhoto(folder.name, it.name, bmp, it.path)
+                        } ?: listOf()
                     auxList.addAll(aux)
                 }
                 auxList

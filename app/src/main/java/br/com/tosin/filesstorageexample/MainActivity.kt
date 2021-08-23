@@ -1,8 +1,8 @@
-package br.com.tosin.samplefilesstorage
+package br.com.tosin.filesstorageexample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import br.com.tosin.samplefilesstorage.ui.main.MainFragment
+import br.com.tosin.filesstorageexample.ui.main.MainFragment
 
 class MainActivity : AppCompatActivity() {
 

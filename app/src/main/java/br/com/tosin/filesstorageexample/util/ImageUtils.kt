@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.util
+package br.com.tosin.filesstorageexample.util
 
 import android.content.Context
 import android.media.ExifInterface

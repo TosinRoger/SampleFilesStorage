@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.ui.main.adapter
+package br.com.tosin.filesstorageexample.ui.main.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -6,8 +6,8 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import br.com.tosin.samplefilesstorage.databinding.ItemPhotoBinding
-import br.com.tosin.samplefilesstorage.model.InternalStoragePhoto
+import br.com.tosin.filesstorageexample.databinding.ItemPhotoBinding
+import br.com.tosin.filesstorageexample.model.InternalStoragePhoto
 
 class InternalStoragePhotoAdapter(
     private val onPhotoClick: (InternalStoragePhoto) -> Unit

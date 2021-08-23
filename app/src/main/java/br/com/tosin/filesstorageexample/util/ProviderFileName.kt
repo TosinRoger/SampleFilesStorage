@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.util
+package br.com.tosin.filesstorageexample.util
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -14,7 +14,6 @@ object ProviderFileName {
     fun createImageName(): String {
         val calendar = Calendar.getInstance()
         val dateFormat: DateFormat = SimpleDateFormat("yyyy-MM-dd_-_HH:mm:ss", Locale.getDefault())
-        val aux = dateFormat.format(calendar.time)
-        return "$aux.jpg"
+        return dateFormat.format(calendar.time)
     }
 }

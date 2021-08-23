@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage
+package br.com.tosin.filesstorageexample
 
 import org.junit.Test
 

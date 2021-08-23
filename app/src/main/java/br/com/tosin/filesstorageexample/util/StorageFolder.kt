@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.util
+package br.com.tosin.filesstorageexample.util
 
 enum class StorageFolder(val folderName: String) {
     TEMP_IMAGE("TempImage"),

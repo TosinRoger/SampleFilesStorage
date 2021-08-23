@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.delegate
+package br.com.tosin.filesstorageexample.delegate
 
 import java.lang.Exception
 

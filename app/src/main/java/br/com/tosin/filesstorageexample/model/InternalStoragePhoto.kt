@@ -1,4 +1,4 @@
-package br.com.tosin.samplefilesstorage.model
+package br.com.tosin.filesstorageexample.model
 
 import android.graphics.Bitmap
 
