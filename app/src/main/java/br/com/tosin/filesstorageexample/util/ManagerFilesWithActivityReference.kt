@@ -49,10 +49,11 @@ object ManagerFilesWithActivityReference {
                     val buffer = ByteArray(4 * 1024) // or other buffer size
                     var read: Int = -1
                     while (input?.read(buffer).also {
-                            if (it != null) {
-                                read = it
-                            }
-                        } != -1) {
+                        if (it != null) {
+                            read = it
+                        }
+                    } != -1
+                    ) {
                         output.write(buffer, 0, read)
                     }
                     output.flush()
@@ -65,7 +66,6 @@ object ManagerFilesWithActivityReference {
             delegate.onError(e.localizedMessage, null)
         }
     }
-
 
     private fun createFilesFolder(context: Context, folderName: StorageFolder): File {
         val rootApp = context.filesDir
@@ -89,7 +89,7 @@ object ManagerFilesWithActivityReference {
 
     private fun deleteTempImage(context: Context): Boolean {
         val cache = createCacheFolder(context, StorageFolder.TEMP_IMAGE)
-        return if(cache.exists())
+        return if (cache.exists())
             cache.deleteRecursively()
         else
             false

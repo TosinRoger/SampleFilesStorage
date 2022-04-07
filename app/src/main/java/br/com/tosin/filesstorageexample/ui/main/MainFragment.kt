@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainFragment : Fragment() {
+class MainFragment : Fragment(R.layout.main_fragment) {
 
     companion object {
         private const val RESTORE_CAMERA_URI_KEY = "restore_camera_uri_key"
@@ -45,7 +45,8 @@ class MainFragment : Fragment() {
     private var cameraUriTemp: Uri? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = MainFragmentBinding.inflate(inflater, container, false)
@@ -92,7 +93,6 @@ class MainFragment : Fragment() {
                     Toast.makeText(requireContext(), msgError, Toast.LENGTH_SHORT)
                         .show()
                 }
-
             }
             ManagerFilesWithActivityReference
                 .deleteFileFromInternalPath(
@@ -139,8 +139,9 @@ class MainFragment : Fragment() {
             }
         }
 
-        takePhoto =
-            registerForActivityResult(ActivityResultContracts.TakePicture(), delegateTakePhoto)
+        takePhoto = registerForActivityResult(
+            ActivityResultContracts.TakePicture(), delegateTakePhoto
+        )
 
         val delegateOpenGallery = ActivityResultCallback<Uri> { result ->
             if (result == null) {
