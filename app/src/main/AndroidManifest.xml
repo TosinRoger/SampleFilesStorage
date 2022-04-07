@@ -10,7 +10,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SampleFilesStorage">
-        <activity android:name="br.com.tosin.filesstorageexample.MainActivity">
+        <activity android:name="br.com.tosin.filesstorageexample.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
