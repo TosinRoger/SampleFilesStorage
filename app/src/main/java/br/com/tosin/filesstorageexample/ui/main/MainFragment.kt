@@ -143,7 +143,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             ActivityResultContracts.TakePicture(), delegateTakePhoto
         )
 
-        val delegateOpenGallery = ActivityResultCallback<Uri> { result ->
+        val delegateOpenGallery = ActivityResultCallback<Uri?> { result ->
             if (result == null) {
                 showMsgError(getString(R.string.error_problems_open_gallery))
             } else {
