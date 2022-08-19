@@ -140,7 +140,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         }
 
         takePhoto = registerForActivityResult(
-            ActivityResultContracts.TakePicture(), delegateTakePhoto
+            ActivityResultContracts.TakePicture(),
+            delegateTakePhoto
         )
 
         val delegateOpenGallery = ActivityResultCallback<Uri?> { result ->
@@ -159,8 +160,10 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             }
         }
 
-        fetchGalleryPhoto =
-            registerForActivityResult(ActivityResultContracts.GetContent(), delegateOpenGallery)
+        fetchGalleryPhoto = registerForActivityResult(
+            ActivityResultContracts.GetContent(),
+            delegateOpenGallery
+        )
 
         _binding?.buttonTakePhoto?.setOnClickListener {
             val fileName = ProviderFileName.createImageNameToJPG()
@@ -224,8 +227,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
                     auxList.addAll(aux)
                 }
                 auxList
-            } else
+            } else {
                 listOf()
+            }
         }
     }
 }
