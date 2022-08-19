@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="#F0F">
 
-
     <FrameLayout
         android:id="@+id/fragmentContainerView"
         android:layout_width="0dp"

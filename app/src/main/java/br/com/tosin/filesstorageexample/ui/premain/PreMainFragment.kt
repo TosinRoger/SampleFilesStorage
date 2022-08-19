@@ -37,7 +37,7 @@ class PreMainFragment : Fragment(R.layout.pre_main_fragment) {
         super.onViewCreated(view, savedInstanceState)
         childFragmentManager
             .beginTransaction()
-            .replace(R.id.fragmentContainerView, MainFragment.newInstance())
+            .add(R.id.fragmentContainerView, MainFragment.newInstance())
             .commit()
     }
 }
